@@ -2,6 +2,7 @@ package com.tbruyelle.rxpermissions;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -24,7 +25,25 @@ public class ShadowActivity extends EnsureSameProcessActivity {
 
     private void handleIntent(Intent intent) {
         String[] permissions = intent.getStringArrayExtra("permissions");
-        requestPermissions(permissions, 42);
+        if (permissions == null) {
+            finish();
+            return;
+        }
+        try {
+            requestPermissions(permissions, 42);
+        } catch (NoSuchMethodError error) {
+            int[] grantResults = new int[permissions.length];
+            shouldShowRequestPermissionRationale = new boolean[permissions.length];
+
+            for (int i = 0; i < permissions.length; i++) {
+                grantResults[i] = PackageManager.PERMISSION_GRANTED;
+                shouldShowRequestPermissionRationale[i] = false;
+            }
+
+            RxPermissions.getInstance(this)
+                    .onRequestPermissionsResult(42, permissions, grantResults, shouldShowRequestPermissionRationale);
+            finish();
+        }
     }
 
     @Override
